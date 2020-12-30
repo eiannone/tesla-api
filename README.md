@@ -3,12 +3,15 @@
 ## Install
 
 ```
-$ npm install @eiannone/tesla-api
+$ npm install @eiannone/tesla-api --save
 ```
 
 ## Usage
 
 ```js
+import {TeslaApi, ApiError} from '@eiannone/tesla-api';
+
+const access_token = (process.argv.length > 2)? process.argv[2] : null;
 const api = new TeslaApi(access_token);
 
 // https://www.teslaapi.io/vehicles/list#vehicles
