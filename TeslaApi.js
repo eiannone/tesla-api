@@ -63,7 +63,7 @@ class TeslaApi {
                         }
                     });
                 } else {
-                    // if status code = 401 (uauthorized) the token could be expired
+                    // if status code = 401 (unauthorized) the token could be expired
                     if (res.statusCode == 401 && this.refresh_token != null) {
                         // Tries to refresh the tokens
                         this.refreshToken(this.refresh_token)
@@ -162,6 +162,10 @@ class TeslaApi {
                     this.cb_refreshToken(this.token, this.refresh_token);
                 }
                 return resp;
+            })
+            .catch(error => {
+                if (error instanceof Error) error.message += " - Unable to refresh Token";
+                throw error;
             });
     }
 
