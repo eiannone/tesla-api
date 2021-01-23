@@ -33,11 +33,6 @@ class TeslaApi {
             case 405: return ApiError.IN_SERVICE;
             case 408: return ApiError.UNAVAILABLE;
             case 504: return ApiError.TIMEOUT;
-            
-            case 'EAI_AGAIN':  // DNS lookup timeout
-            case 'ECONNRESET':
-                return ApiError.NETWORK;
-
             default: return ApiError.UNKNOWN;
         }
     }
@@ -77,8 +72,12 @@ class TeslaApi {
                 }
             });
             req.on('error', e => {
-                let errMsg = e.message + " ("+e.code+")";
-                reject(new ApiError(errMsg, this.#decodeStatus(e.code)));
+                // Error code examples:
+                // - EAI_AGAIN (DNS lookup timeout)
+                // - ECONNRESET
+                // - ECONNREFUSED
+                // - ENOTFOUND
+                reject(new ApiError(e.message + " ("+e.code+")", ApiError.NETWORK));
             });
             req.end();
         });
@@ -141,8 +140,12 @@ class TeslaApi {
                 }
             });
             req.on('error', e => {
-                let errMsg = e.message + " ("+e.code+")";
-                reject(new ApiError(errMsg, this.#decodeStatus(e.code)));
+                // Error code examples:
+                // - EAI_AGAIN (DNS lookup timeout)
+                // - ECONNRESET
+                // - ECONNREFUSED
+                // - ENOTFOUND
+                reject(new ApiError(e.message + " ("+e.code+")", ApiError.NETWORK));
             });
             req.write(post_data);
             req.end();
