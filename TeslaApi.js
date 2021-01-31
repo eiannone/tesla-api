@@ -32,6 +32,7 @@ class TeslaApi {
             case 404: return ApiError.NO_VEHICLE;
             case 405: return ApiError.IN_SERVICE;
             case 408: return ApiError.UNAVAILABLE;
+            case 503: return ApiError.NETWORK;
             case 504: return ApiError.TIMEOUT;
             default: return ApiError.UNKNOWN;
         }
