@@ -34,6 +34,7 @@ class TeslaApi {
             case 408: return ApiError.UNAVAILABLE;
             case 503: return ApiError.NETWORK;
             case 504: return ApiError.TIMEOUT;
+            case 540: return ApiError.UNAVAILABLE; // TODO: check. Should be system booting
             default: return ApiError.UNKNOWN;
         }
     }
