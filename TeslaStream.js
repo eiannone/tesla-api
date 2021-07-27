@@ -143,15 +143,16 @@ export default class TeslaStream {
                         this.log("Vehicle error: " + d.value, "error");
                         break;
                     case "client_error":
-                        this.log("Client error: " + data, "error");
+                        this.log("Client error: " + d.value, "error");
                         if (cb_error != null) cb_error(d.value);
                         break;
                     default:
                         this.log("Stream API error ["+d.error_type+"]: " + data, "error");
                         break;
-                }   
+                }                
             } else {
                 this.log("Unknown message: " + data, "error");
+                if (cb_error != null) cb_error(data);
             }
         });
         this.ws.on('error', (error) => {
