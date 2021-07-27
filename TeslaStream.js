@@ -56,7 +56,7 @@ export default class TeslaStream {
                 this.ws.send(JSON.stringify({msg_type: "data:unsubscribe", tag: this.tag}));
             }
             this.log("Sending closing frame...");
-            this.ws.close();
+            this.ws.close(); // After closing eventually it will reconnect (see 'on close' event)
         }
     }
 
@@ -68,7 +68,7 @@ export default class TeslaStream {
     #timeout() {
         this.timeouts += 1;
         let level = (this.timeouts < 8)? 'debug' : 'info';
-        this.log("Stream connection timed out /" + this.timeouts, level);        
+        this.log("Stream connection timed out / " + this.timeouts, level);        
         if (this.timeouts % 10 == 3) { // Teslamate does it on the 5th attempt
             this.log("Stream inactive!");
             if (this.cbInactive != null) this.cbInactive();
@@ -107,7 +107,7 @@ export default class TeslaStream {
         });
         this.ws.on('message', (data) => {
             if (this.checkTimeout != null) clearTimeout(this.checkTimeout);
-            this.checkTimeout = setTimeout(this.#timeout.bind(this), 30000);
+            this.checkTimeout = setTimeout(this.#timeout.bind(this), 15000);
 
             let d = JSON.parse(data);
             if (d.msg_type == 'control:hello') {
@@ -123,8 +123,9 @@ export default class TeslaStream {
                 switch(d.error_type) {
                     case "vehicle_disconnected":
                         this.disconnects++;
-                        let level = (this.disconnects < 8)? 'debug' : 'info';
-                        this.log("Vehicle disconnected/" + this.disconnects, level);
+                        const level = (this.disconnects < 8)? 'debug' : 'info';
+                        const nDisconnections = (this.disconnects == 1)? '' : ' / '+this.disconnects;
+                        this.log("Vehicle disconnected" + nDisconnections, level);
                         clearTimeout(this.checkTimeout);                        
                         if (this.disconnects % 10 == 0) {
                             this.log("Too many disconnects!", "warn");
@@ -135,8 +136,9 @@ export default class TeslaStream {
                                 this.#expBackOffMs(this.disconnects, 0, 8, 1.3) :
                                 this.#expBackOffMs(this.disconnects, 30, 60); // Teslamate uses min 15, max 30
                             
-                            this.log("Waiting for " + ms + " ms...");
-                            this.checkTimeout = setTimeout(() => { this.#subscribe(tag, token); }, ms);
+                            clearTimeout(this.checkTimeout);
+                            this.log("Waiting for " + (ms * 1000) + " sec...");                            
+                            this.checkTimeout = setTimeout(_ => { this.#subscribe(tag, token); }, ms);
                         }
                         break;
                     case "vehicle_error":
