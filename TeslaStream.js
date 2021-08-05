@@ -137,7 +137,7 @@ export default class TeslaStream {
                                 this.#expBackOffMs(this.disconnects, 30, 60); // Teslamate uses min 15, max 30
                             
                             clearTimeout(this.checkTimeout);
-                            this.log("Waiting for " + (ms * 1000) + " sec...");                            
+                            this.log("Waiting for " + Math.round(ms / 1000) + " sec...");                            
                             this.checkTimeout = setTimeout(_ => { this.#subscribe(tag, token); }, ms);
                         }
                         break;
