@@ -126,7 +126,7 @@ export default class TeslaStream {
                         const level = (this.disconnects < 8)? 'debug' : 'info';
                         const nDisconnections = (this.disconnects == 1)? '' : ' / '+this.disconnects;
                         this.log("Vehicle disconnected" + nDisconnections, level);
-                        clearTimeout(this.checkTimeout);                        
+                        clearTimeout(this.checkTimeout);
                         if (this.disconnects % 10 == 0) {
                             this.log("Too many disconnects!", "warn");
                             if (this.cbDisconnects != null) this.cbDisconnects();
@@ -135,8 +135,6 @@ export default class TeslaStream {
                             let ms = (this.lastShiftState != null && this.lastShiftState != "")?
                                 this.#expBackOffMs(this.disconnects, 0, 8, 1.3) :
                                 this.#expBackOffMs(this.disconnects, 30, 60); // Teslamate uses min 15, max 30
-                            
-                            clearTimeout(this.checkTimeout);
                             this.log("Waiting for " + Math.round(ms / 1000) + " sec...");                            
                             this.checkTimeout = setTimeout(_ => { this.#subscribe(tag, token); }, ms);
                         }
