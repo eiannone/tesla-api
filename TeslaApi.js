@@ -11,6 +11,7 @@ class ApiError extends Error {
     static UNAVAILABLE = 'Vehicle unavailable';
     static TIMEOUT = 'Timeout';
     static NETWORK = 'Network unavailable';
+    static SERVER = 'Internal server error';
 
     constructor(error, reason = null) {
         super((error instanceof Error)? error.message : error);
@@ -32,6 +33,7 @@ class TeslaApi {
             case 404: return ApiError.NO_VEHICLE;
             case 405: return ApiError.IN_SERVICE;
             case 408: return ApiError.UNAVAILABLE;
+            case 500: return ApiError.SERVER;
             case 503: return ApiError.NETWORK;
             case 504: return ApiError.TIMEOUT;
             case 540: return ApiError.UNAVAILABLE; // TODO: check. Should be system booting
