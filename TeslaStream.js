@@ -69,7 +69,7 @@ export default class TeslaStream {
         this.timeouts += 1;
         let level = (this.timeouts < 8)? 'debug' : 'info';
         this.log("Stream connection timed out / " + this.timeouts, level);        
-        if (this.timeouts % 10 == 3) { // Teslamate does it on the 5th attempt
+        if (this.timeouts % 3 == 0) { // Teslamate does it every 5th attempt
             this.log("Stream inactive!");
             if (this.cbInactive != null) this.cbInactive();
         }
@@ -141,10 +141,12 @@ export default class TeslaStream {
                         break;
                     case "vehicle_error":
                         this.log("Vehicle error: " + d.value, "error");
+                        this.#reconnect();
                         break;
                     case "client_error":
                         this.log("Client error: " + d.value, "error");
                         if (cb_error != null) cb_error(d.value);
+                        this.#reconnect();
                         break;
                     default:
                         this.log("Stream API error ["+d.error_type+"]: " + data, "error");

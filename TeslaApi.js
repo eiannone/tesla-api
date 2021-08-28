@@ -25,6 +25,11 @@ class TeslaApi {
         this.vid = vehicle_id;
         this.token = access_token;
         this.refresh_token = refresh_token;
+        this.timeout = 10000;
+    }
+
+    setTimeout(seconds) {
+        this.timeout = seconds * 1000;
     }
 
     #decodeStatus(statusCode) {
@@ -45,7 +50,7 @@ class TeslaApi {
         return new Promise((resolve, reject) => {       
             const req = request(BASE_URL + "/api/1/vehicles/" + path, {
                 headers: { 'user-agent': "TeslaEma", 'Authorization': "Bearer " + this.token },
-                timeout: 30000,
+                timeout: this.timeout,
                 method: method
             }, res => {
                 if (res.statusCode > 199 && res.statusCode < 300) {
