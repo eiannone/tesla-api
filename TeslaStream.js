@@ -1,6 +1,5 @@
 import WebSocket from 'ws';
 
-const IDLE = 0;
 const CONNECTING = 1;
 const CONNECTED = 2;
 const CLOSING = 3;
@@ -12,7 +11,7 @@ export default class TeslaStream {
     constructor(logger = null, cb_inactive = null, cb_disconnects = null) {
         this.log = logger || this.#internalLog;
         this.ws = null;
-        this.state = IDLE;
+        this.state = CLOSED;
         this.columns = TeslaStream.DEFAULT_COLUMNS;
         this.checkTimeout = null;
         this.timeouts = 0;
@@ -28,6 +27,10 @@ export default class TeslaStream {
         return this.state == CONNECTED;
     }
 
+    isClosed() {
+        return this.state == CLOSED;
+    }
+
     #internalLog(msg, level = 'debug') {
         console.log("[%s] %s", level, msg);
     }
@@ -38,7 +41,7 @@ export default class TeslaStream {
     }
 
     disconnect(reconnect = false, unsubscribe = true) {
-        if (this.state == CLOSING || this.state == CLOSED) return;
+        if (this.state == CLOSED) return;
         this.reconnect = reconnect;
         if (this.checkTimeout != null) {
             clearTimeout(this.checkTimeout);
@@ -86,6 +89,23 @@ export default class TeslaStream {
         }));        
     }
 
+    #disconnectResubscribe(tag, token, reason) {
+        this.disconnects++;
+        this.log(reason + ((this.disconnects == 1)? '' : ' / '+this.disconnects), (this.disconnects < 8)? 'debug' : 'info');
+        clearTimeout(this.checkTimeout);
+        if (this.disconnects % 10 == 0) {
+            this.log("Too many disconnects!", "warn");
+            if (this.cbDisconnects != null) this.cbDisconnects();
+        }
+        else {
+            const ms = (this.lastShiftState != null && this.lastShiftState != "")?
+                this.#expBackOffMs(this.disconnects, 0, 8, 1.3) :
+                this.#expBackOffMs(this.disconnects, 30, 60); // Teslamate uses min 15, max 30
+            this.log("Waiting for " + Math.round(ms / 1000) + " sec...");                            
+            this.checkTimeout = setTimeout(_ => { this.#subscribe(tag, token); }, ms);
+        }        
+    }
+
     connect(tag, token, columns = null, cb_data = null, cb_error = null) {
         this.tag = tag.toString();
         if (columns != null) this.columns = columns;        
@@ -122,26 +142,10 @@ export default class TeslaStream {
             } else if (d.msg_type == 'data:error' && typeof d.error_type != "undefined") {
                 switch(d.error_type) {
                     case "vehicle_disconnected":
-                        this.disconnects++;
-                        const level = (this.disconnects < 8)? 'debug' : 'info';
-                        const nDisconnections = (this.disconnects == 1)? '' : ' / '+this.disconnects;
-                        this.log("Vehicle disconnected" + nDisconnections, level);
-                        clearTimeout(this.checkTimeout);
-                        if (this.disconnects % 10 == 0) {
-                            this.log("Too many disconnects!", "warn");
-                            if (this.cbDisconnects != null) this.cbDisconnects();
-                        }
-                        else {
-                            let ms = (this.lastShiftState != null && this.lastShiftState != "")?
-                                this.#expBackOffMs(this.disconnects, 0, 8, 1.3) :
-                                this.#expBackOffMs(this.disconnects, 30, 60); // Teslamate uses min 15, max 30
-                            this.log("Waiting for " + Math.round(ms / 1000) + " sec...");                            
-                            this.checkTimeout = setTimeout(_ => { this.#subscribe(tag, token); }, ms);
-                        }
+                        this.#disconnectResubscribe(tag, token, "Vehicle disconnected");
                         break;
                     case "vehicle_error":
-                        this.log("Vehicle error: " + d.value, "error");
-                        this.#reconnect();
+                        this.#disconnectResubscribe(tag, token, "Vehicle error: " + d.value);
                         break;
                     case "client_error":
                         this.log("Client error: " + d.value, "error");
