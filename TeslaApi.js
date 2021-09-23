@@ -39,7 +39,8 @@ class TeslaApi {
             case 405: return ApiError.IN_SERVICE;
             case 408: return ApiError.UNAVAILABLE;
             case 500: return ApiError.SERVER;
-            case 503: return ApiError.NETWORK;
+            case 502: return ApiError.NETWORK; // Bad gateway
+            case 503: return ApiError.NETWORK; // Service unavailable
             case 504: return ApiError.TIMEOUT;
             case 540: return ApiError.UNAVAILABLE; // TODO: check. Should be system booting
             default: return ApiError.UNKNOWN;
