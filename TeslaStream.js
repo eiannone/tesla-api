@@ -51,6 +51,11 @@ export default class TeslaStream extends EventEmitter {
             this.state = CLOSED;
             return;
         }
+        if (this.ws.readyState == WebSocket.CONNECTING) {
+            this.ws.removeAllListeners('open');
+            this.ws.on('open', _ => { disconnect(reconnect, unsubscribe); });
+            return;
+        }
         this.state = CLOSING;
         if (this.ws.readyState != WebSocket.CLOSING) {
             if (unsubscribe) {
@@ -63,7 +68,7 @@ export default class TeslaStream extends EventEmitter {
     }
 
     #reconnect() {
-        this.log("Reconnecting...");
+        this.log("Disconnecting and reconnecting...");
         this.disconnect(true, false);
     }
 
@@ -120,7 +125,7 @@ export default class TeslaStream extends EventEmitter {
         if (this.checkTimeout != null) clearTimeout(this.checkTimeout);
         this.checkTimeout = setTimeout(this.#timeout.bind(this), this.#expBackOffMs(this.timeouts, 10, 30));
 
-        this.ws.on('open', () => {
+        this.ws.on('open', _ => {
             this.log("Websocket open.");
             this.#subscribe(this.tag, token);
         });
@@ -166,12 +171,12 @@ export default class TeslaStream extends EventEmitter {
         });
         this.ws.on('close', (code, reason) => {
             this.log("Websocket closed ("+code + (reason? ': '+reason : '')+").");
-            if (code == 1006) this.reconnect = true; // Abnormal close
+            if (code == 1006 && this.state != CLOSING) this.reconnect = true; // Abnormal close
             if (this.checkTimeout != null) clearTimeout(this.checkTimeout);
             this.ws = null;
             this.state = CLOSED;
             if (this.reconnect) {
-                this.checkTimeout = setTimeout(() => { 
+                this.checkTimeout = setTimeout(_ => { 
                     this.log("Reconnecting...");
                     this.connect(tag, token, columns); 
                 }, 1000);
