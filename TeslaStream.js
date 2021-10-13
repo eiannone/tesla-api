@@ -10,6 +10,7 @@ export default class TeslaStream extends EventEmitter {
     static DEFAULT_COLUMNS = ['elevation', 'est_heading', 'est_lat', 'est_lng', 'odometer', 'power', 'shift_state', 'speed', 'soc'];
 
     constructor(logger = null) {
+        super();
         this.log = logger || this.#internalLog;
         this.ws = null;
         this.state = CLOSED;
