@@ -31,6 +31,10 @@ export default class TeslaStream extends EventEmitter {
         return this.state == CLOSED;
     }
 
+    isClosing() {
+        return this.state == CLOSING;
+    }    
+
     #internalLog(msg, level = 'debug') {
         console.log("[%s] %s", level, msg);
     }
