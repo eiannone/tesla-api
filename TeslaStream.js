@@ -138,15 +138,10 @@ export default class TeslaStream extends EventEmitter {
             this.log("Websocket open.");
             this.#subscribe(this.tag, token);
         });
-        this.ws.on('message', (data, isBinary) => {
-            if (isBinary) {
-                this.log("Binary data received. Ignored.");
-                return;
-            }
+        this.ws.on('message', (message) => {
             if (this.checkTimeout != null) clearTimeout(this.checkTimeout);
             this.checkTimeout = setTimeout(this.#timeout.bind(this), 15000);
-
-            const message = data.toString();
+            
             let d = JSON.parse(message);
             if (d.msg_type == 'control:hello') {
                 this.log("Hello response received.");
@@ -184,7 +179,7 @@ export default class TeslaStream extends EventEmitter {
             this.log("Websocket error: " + errMsg, "error");
         });
         this.ws.on('close', (code, reason) => {
-            this.log("Websocket closed ("+ code + (reason? ': ' + reason.toString() : '') + ").");
+            this.log("Websocket closed ("+ code + (reason? ': ' + reason : '') + ").");
             if (code == 1006 && this.state != CLOSING) this.reconnect = true; // Abnormal close
             if (this.checkTimeout != null) clearTimeout(this.checkTimeout);
             this.ws = null;
