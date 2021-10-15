@@ -120,12 +120,16 @@ export default class TeslaStream extends EventEmitter {
         if (columns != null) this.columns = columns;        
         let shiftStatePos = this.columns.indexOf('shift_state');
 
-        if (this.ws != null && this.ws.readyState != WebSocket.CLOSED) return;
+        if (this.ws != null) {
+            if (this.state == CLOSING) this.reconnect = true;
+            if (this.ws.readyState != WebSocket.CLOSED) return;
+        }
         this.state = CONNECTING;
         this.log("Connecting to websocket...");
         this.ws = new WebSocket("wss://streaming.vn.teslamotors.com/streaming/", {
             perMessageDeflate: false,
-            handshakeTimeout: 6000
+            handshakeTimeout: 6000,
+            skipUTF8Validation: true
         });
         if (this.checkTimeout != null) clearTimeout(this.checkTimeout);
         this.checkTimeout = setTimeout(this.#timeout.bind(this), this.#expBackOffMs(this.timeouts, 10, 30));
@@ -134,11 +138,16 @@ export default class TeslaStream extends EventEmitter {
             this.log("Websocket open.");
             this.#subscribe(this.tag, token);
         });
-        this.ws.on('message', (data) => {
+        this.ws.on('message', (data, isBinary) => {
+            if (isBinary) {
+                this.log("Binary data received. Ignored.");
+                return;
+            }
             if (this.checkTimeout != null) clearTimeout(this.checkTimeout);
             this.checkTimeout = setTimeout(this.#timeout.bind(this), 15000);
 
-            let d = JSON.parse(data);
+            const message = data.toString();
+            let d = JSON.parse(message);
             if (d.msg_type == 'control:hello') {
                 this.log("Hello response received.");
                 this.state = CONNECTED;
@@ -166,16 +175,16 @@ export default class TeslaStream extends EventEmitter {
                         break;
                 }                
             } else {
-                this.log("Unknown message: " + data, "error");
-                this.emit('error', data);
+                this.log("Unknown message: " + message, "error");
+                this.emit('error', message);
             }
         });
-        this.ws.on('error', (error) => {
+        this.ws.on('error', error => {
             const errMsg = (error instanceof Error)? error.message : error;
             this.log("Websocket error: " + errMsg, "error");
         });
         this.ws.on('close', (code, reason) => {
-            this.log("Websocket closed ("+code + (reason? ': '+reason : '')+").");
+            this.log("Websocket closed ("+ code + (reason? ': ' + reason.toString() : '') + ").");
             if (code == 1006 && this.state != CLOSING) this.reconnect = true; // Abnormal close
             if (this.checkTimeout != null) clearTimeout(this.checkTimeout);
             this.ws = null;
