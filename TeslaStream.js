@@ -104,12 +104,12 @@ export default class TeslaStream extends EventEmitter {
         clearTimeout(this.checkTimeout);
         if (this.disconnects % 10 == 0) {
             this.log("Too many disconnects!", "warn");
-            this.emit('too-many-diconnects');
+            this.emit('too-many-disconnects');
         }
         else {
             const ms = (this.lastShiftState != null && this.lastShiftState != "")?
                 this.#expBackOffMs(this.disconnects, 0, 8, 1.3) :
-                this.#expBackOffMs(this.disconnects, minDelay, 60); // Teslamate uses min 15, max 30
+                this.#expBackOffMs(this.disconnects, minDelay, 120); // Teslamate uses min 15, max 30
             this.log("Waiting for " + Math.round(ms / 1000) + " sec...");                            
             this.checkTimeout = setTimeout(_ => { this.#subscribe(tag, token); }, ms);
         }        
@@ -158,6 +158,7 @@ export default class TeslaStream extends EventEmitter {
                         this.#disconnectResubscribe(tag, token, "Vehicle disconnected", resubscribeDelay);
                         break;
                     case "vehicle_error":
+                        if (d.value == 'Vehicle is offline') this.emit('offline');
                         this.#disconnectResubscribe(tag, token, "Vehicle error: " + d.value, resubscribeDelay);
                         break;
                     case "client_error":
