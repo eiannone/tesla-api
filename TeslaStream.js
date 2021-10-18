@@ -180,7 +180,7 @@ export default class TeslaStream extends EventEmitter {
             this.log("Websocket error: " + errMsg, "error");
         });
         this.ws.on('close', (code, reason) => {
-            this.log("Websocket closed ("+ code + (reason? ': ' + reason : '') + ").");
+            this.log("Websocket closed ("+ code + ((reason != '')? `: ${reason}` : '') + ").");
             if (code == 1006 && this.state != CLOSING) this.reconnect = true; // Abnormal close
             if (this.checkTimeout != null) clearTimeout(this.checkTimeout);
             this.ws = null;
