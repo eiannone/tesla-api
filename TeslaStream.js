@@ -164,7 +164,7 @@ export default class TeslaStream extends EventEmitter {
                     case "client_error":
                         this.log("Client error: " + d.value, "error");
                         this.emit('error', d.value);
-                        this.#reconnect();
+                        if (d.value != "Can't validate token. ") this.#reconnect();
                         break;
                     default:
                         this.log("Stream API error ["+d.error_type+"]: " + data, "error");
