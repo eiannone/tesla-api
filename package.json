@@ -1,6 +1,6 @@
 {
     "name": "@eiannone/tesla-api",
-    "version": "1.9.2",
+    "version": "1.10.0",
     "description": "Nodejs Tesla API",
     "type": "module",
     "main": "index.js",

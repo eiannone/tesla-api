@@ -47,10 +47,17 @@ class TeslaApi {
         }
     }
 
-    async #apiCall(path, method = 'GET') {
-        return new Promise((resolve, reject) => {       
+    async #apiCall(path, method = 'GET', params = undefined) {
+        return new Promise((resolve, reject) => {
+            const postData = (typeof params != 'undefined')? JSON.stringify(params) : '';
+            let headers = { 'user-agent': "TeslaEma", 'Authorization': "Bearer " + this.token };
+            if (postData.length > 0) {
+                headers['Content-Type'] = 'application/json';
+                headers['Content-Length'] = postData.length;
+            }
+
             const req = request(BASE_URL + "/api/1/vehicles/" + path, {
-                headers: { 'user-agent': "TeslaEma", 'Authorization': "Bearer " + this.token },
+                headers: headers,
                 timeout: this.timeout,
                 method: method
             }, res => {
@@ -89,6 +96,7 @@ class TeslaApi {
                 // - ENOTFOUND
                 reject(new ApiError(e.message + " ("+e.code+")", ApiError.NETWORK));
             });
+            if (postData.length > 0) req.write(postData);
             req.end();
         });
     }
@@ -116,19 +124,19 @@ class TeslaApi {
         return this.#apiCall(vid + "/wake_up", "POST");
     }
 
-    async command(command, vehicle_id = null) {
+    async command(command, params = undefined, vehicle_id = null) {
         const vid = (vehicle_id == null)? this.vid : vehicle_id;
-        return this.#apiCall(vid + "/command/" + command, "POST");
+        return this.#apiCall(vid + "/command/" + command, "POST", params);
     }
 
     async #oauthCall(params) {
-        const post_data = JSON.stringify(params);
         return new Promise((resolve, reject) => {
+            const postData = JSON.stringify(params);
             const req = request(BASE_URL + '/oauth/token', {
                 headers: { 
                     'user-agent': "TeslaEma",
                     'Content-Type': 'application/json',
-                    'Content-Length': post_data.length
+                    'Content-Length': postData.length
                 },
                 timeout: 30000,
                 method: 'POST'
@@ -157,7 +165,7 @@ class TeslaApi {
                 // - ENOTFOUND
                 reject(new ApiError(e.message + " ("+e.code+")", ApiError.NETWORK));
             });
-            req.write(post_data);
+            req.write(postData);
             req.end();
         });s
     }
