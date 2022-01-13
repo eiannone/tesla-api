@@ -129,10 +129,51 @@ class TeslaApi {
         return this.#apiCall(vid + "/command/" + command, "POST", params);
     }
 
-    async #oauthCall(params) {
+    // async #oauthCall(params) {
+    //     return new Promise((resolve, reject) => {
+    //         const postData = JSON.stringify(params);
+    //         const req = request(BASE_URL + '/oauth/token', {
+    //             headers: { 
+    //                 'user-agent': "TeslaEma",
+    //                 'Content-Type': 'application/json',
+    //                 'Content-Length': postData.length
+    //             },
+    //             timeout: 30000,
+    //             method: 'POST'
+    //         }, res => {
+    //             if (res.statusCode > 199 && res.statusCode < 300) {
+    //                 res.setEncoding('utf8');
+    //                 let rawData = '';
+    //                 res.on('data', chunk => { rawData += chunk; });
+    //                 res.on('end', () => {
+    //                     try {
+    //                         resolve(JSON.parse(rawData));
+    //                     } catch(err) {
+    //                         reject(new ApiError(err));
+    //                     }
+    //                 });
+    //             } else {
+    //                 let errMsg = res.statusMessage + " ("+res.statusCode+")";
+    //                 reject(new ApiError(errMsg, this.#decodeStatus(res.statusCode)));
+    //             }
+    //         });
+    //         req.on('error', e => {
+    //             // Error code examples:
+    //             // - EAI_AGAIN (DNS lookup timeout)
+    //             // - ECONNRESET
+    //             // - ECONNREFUSED
+    //             // - ENOTFOUND
+    //             reject(new ApiError(e.message + " ("+e.code+")", ApiError.NETWORK));
+    //         });
+    //         req.write(postData);
+    //         req.end();
+    //     });
+    // }
+
+    async #oauthCall2(params) {
         return new Promise((resolve, reject) => {
             const postData = JSON.stringify(params);
-            const req = request(BASE_URL + '/oauth/token', {
+            const req = request('https://auth.tesla.com/oauth2/v3/token', {
                 headers: { 
                     'user-agent': "TeslaEma",
                     'Content-Type': 'application/json',
@@ -167,7 +208,7 @@ class TeslaApi {
             });
             req.write(postData);
             req.end();
-        });s
+        });
     }
 
     onTokenRefreh(callback) {
@@ -175,7 +216,13 @@ class TeslaApi {
     }
 
     async refreshToken(refresh_token) {
-        return this.#oauthCall({'grant_type': "refresh_token", 'refresh_token': refresh_token})
+        const payLoad = {
+            grant_type: 'refresh_token',
+            client_id: 'ownerapi',
+            refresh_token,
+            scope: 'openid email offline_access'
+        };
+        return this.#oauthCall2(payLoad)
             .then(async (resp) => {
                 this.token = resp.access_token;
                 this.refresh_token = resp.refresh_token;
@@ -190,15 +237,15 @@ class TeslaApi {
             });
     }
 
-    async getTokens(email, password) {
-        return this.#oauthCall({
-            'grant_type': "password",
-            'email': email,
-            'password': password,
-            'client_id': "81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384",
-            'client_secret': "c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3"
-        });
-    }
+    // async getTokens(email, password) {
+    //     return this.#oauthCall({
+    //         'grant_type': "password",
+    //         'email': email,
+    //         'password': password,
+    //         'client_id': "81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384",
+    //         'client_secret': "c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3"
+    //     });
+    // }
 }
 
 export { ApiError, TeslaApi }
