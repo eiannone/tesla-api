@@ -247,7 +247,10 @@ class TeslaApi {
         return this.#apiCall().then(vehicles => {
             for (let v = 0; v < vehicles.length; v++) {
                 if (!vehicles[v].hasOwnProperty('vehicle_id') || !vehicles[v].hasOwnProperty('id_s')) continue;
-                if (vehicles[v].vehicle_id == vehicle_id) return vehicles[v].id_s;
+                if (vehicles[v].vehicle_id == vehicle_id) {
+                    this.vid = vehicles[v].id_s;
+                    return this.vid;
+                }
             }
             throw new ApiError("Vehicle not found");
         });
