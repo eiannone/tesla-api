@@ -21,8 +21,8 @@ class ApiError extends Error {
 }
 
 class TeslaApi {
-    constructor(access_token = null, vehicle_id = null, refresh_token = null) {
-        this.vid = vehicle_id;
+    constructor(access_token = null, id = null, refresh_token = null) {
+        this.vid = id;
         this.token = access_token;
         this.refresh_token = refresh_token;
         this.timeout = 10000;
@@ -47,7 +47,7 @@ class TeslaApi {
         }
     }
 
-    async #apiCall(path, method = 'GET', params = undefined) {
+    async #apiCall(path = "", method = 'GET', params = undefined) {
         return new Promise((resolve, reject) => {
             const postData = (typeof params != 'undefined')? JSON.stringify(params) : '';
             let headers = { 'user-agent': "TeslaEma", 'Authorization': "Bearer " + this.token };
@@ -102,30 +102,30 @@ class TeslaApi {
     }
 
     async getVehicles() {
-        return this.#apiCall("");
+        return this.#apiCall();
     }
 
-    async getVehicle(vehicle_id = null) {
-        return this.#apiCall((vehicle_id == null)? this.vid : vehicle_id);
+    async getVehicle(id = null) {
+        return this.#apiCall((id == null)? this.vid : id);
     }
 
-    async getVehicleData(vehicle_id = null) {
-        const vid = (vehicle_id == null)? this.vid : vehicle_id;
+    async getVehicleData(id = null) {
+        const vid = (id == null)? this.vid : id;
         return this.#apiCall(vid + "/vehicle_data");
     }
 
-    async getChargeState(vehicle_id = null) {
-        const vid = (vehicle_id == null)? this.vid : vehicle_id;
+    async getChargeState(id = null) {
+        const vid = (id == null)? this.vid : id;
         return this.#apiCall(vid + "/data_request/charge_state");
     }    
 
-    async wakeUp(vehicle_id = null) {
-        const vid = (vehicle_id == null)? this.vid : vehicle_id;
+    async wakeUp(id = null) {
+        const vid = (id == null)? this.vid : id;
         return this.#apiCall(vid + "/wake_up", "POST");
     }
 
-    async command(command, params = undefined, vehicle_id = null) {
-        const vid = (vehicle_id == null)? this.vid : vehicle_id;
+    async command(command, params = undefined, id = null) {
+        const vid = (id == null)? this.vid : id;
         return this.#apiCall(vid + "/command/" + command, "POST", params);
     }
 
@@ -241,6 +241,16 @@ class TeslaApi {
             if (error instanceof Error) error.message += " - Unable to refresh Token";
             throw error;            
         }
+    }
+
+    async getId(vehicle_id) {
+        return this.#apiCall().then(vehicles => {
+            for (let v = 0; v < vehicles.length; v++) {
+                if (!vehicles[v].hasOwnProperty('vehicle_id') || !vehicles[v].hasOwnProperty('id_s')) continue;
+                if (vehicles[v].vehicle_id == vehicle_id) return vehicles[v].id_s;
+            }
+            throw new ApiError("Vehicle not found");
+        });
     }
 }
 
