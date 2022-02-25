@@ -58,7 +58,7 @@ export default class TeslaStream extends EventEmitter {
         }
         if (this.ws.readyState == WebSocket.CONNECTING) {
             this.ws.removeAllListeners('open');
-            this.ws.on('open', _ => { disconnect(reconnect, unsubscribe); });
+            this.ws.on('open', _ => this.disconnect(reconnect, unsubscribe));
             return;
         }
         this.state = CLOSING;
