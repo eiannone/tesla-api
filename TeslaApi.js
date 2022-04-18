@@ -216,6 +216,7 @@ class TeslaApi {
         this.cb_refreshToken = callback;
     }
 
+    // https://tesla-api.timdorr.com/api-basics/authentication
     async refreshToken(refresh_token) {
         const payLoad = {
             grant_type: 'refresh_token',
@@ -226,12 +227,13 @@ class TeslaApi {
         try {
             let resp = await this.#oauthCall2(payLoad);
             this.refresh_token = resp.refresh_token;
-            let oauth = await this.#oauthCall({
-                grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                client_id: '81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384',
-                client_secret: 'c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3'
-            }, resp.access_token);
-            this.token = oauth.access_token;
+            // let oauth = await this.#oauthCall({
+            //     grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            //     client_id: '81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384',
+            //     client_secret: 'c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3'
+            // }, resp.access_token);
+            // this.token = oauth.access_token;
+            this.token = resp.access_token;
             if (typeof this.cb_refreshToken == 'function') {
                 this.cb_refreshToken(this.token, this.refresh_token);
             }
