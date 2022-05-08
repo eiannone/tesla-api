@@ -79,7 +79,7 @@ class TeslaApi {
                     if (res.statusCode == 401 && this.refresh_token != null) {
                         // Tries to refresh the tokens
                         this.refreshToken(this.refresh_token)
-                            .then(_ => this.#apiCall(path, method))
+                            .then(_ => this.#apiCall(path, method, params))
                             .then(response => resolve(response))
                             .catch(error => { reject(error); });
                         return;
@@ -175,7 +175,7 @@ class TeslaApi {
     }
 
     // https://tesla-api.timdorr.com/api-basics/authentication
-    async refreshToken(refresh_token) {
+    async refreshToken(refresh_token, retry = 1) {
         try {
             const oauth = await this.#oauthCall({
                 grant_type: 'refresh_token',
@@ -191,6 +191,10 @@ class TeslaApi {
             return oauth;   
         }
         catch(error) {
+            if (retry < 3) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                return this.refreshToken(refresh_token. retry + 1);
+            }
             if (error instanceof Error) error.message += " - Unable to refresh Token";
             throw error;            
         }
