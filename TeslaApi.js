@@ -37,6 +37,7 @@ class TeslaApi {
             case 401: return ApiError.UNAUTHORIZED;
             case 404: return ApiError.NO_VEHICLE;
             case 405: return ApiError.IN_SERVICE;
+            case 406: return ApiError.NETWORK; // Not Acceptable
             case 408: return ApiError.UNAVAILABLE;
             case 500: return ApiError.SERVER;
             case 502: return ApiError.NETWORK; // Bad gateway
