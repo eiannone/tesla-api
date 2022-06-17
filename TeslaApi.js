@@ -194,7 +194,7 @@ class TeslaApi {
         catch(error) {
             if (retry < 3) {
                 await new Promise(resolve => setTimeout(resolve, 500));
-                return this.refreshToken(refresh_token. retry + 1);
+                return this.refreshToken(refresh_token, retry + 1);
             }
             if (error instanceof Error) error.message += " - Unable to refresh Token";
             throw error;            
