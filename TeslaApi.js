@@ -81,8 +81,8 @@ class TeslaApi {
                         // Tries to refresh the tokens
                         this.refreshToken(this.refresh_token)
                             .then(_ => this.#apiCall(path, method, params))
-                            .then(response => resolve(response))
-                            .catch(error => { reject(error); });
+                            .then(resolve)
+                            .catch(reject);
                         return;
                     }
                     let errMsg = res.statusMessage + " ("+res.statusCode+")";
