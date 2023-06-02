@@ -44,7 +44,7 @@ class TeslaApi {
             case 503: return ApiError.NETWORK; // Service unavailable
             case 504: return ApiError.TIMEOUT;
             case 540: return ApiError.UNAVAILABLE; // TODO: check. Should be system booting
-            default: return ApiError.UNKNOWN;
+            default:  return ApiError.UNKNOWN;
         }
     }
 
@@ -115,11 +115,6 @@ class TeslaApi {
         return this.#apiCall(vid + "/vehicle_data");
     }
 
-    async getChargeState(id = null) {
-        const vid = (id == null)? this.vid : id;
-        return this.#apiCall(vid + "/data_request/charge_state");
-    }    
-
     async wakeUp(id = null) {
         const vid = (id == null)? this.vid : id;
         return this.#apiCall(vid + "/wake_up", "POST");
@@ -171,7 +166,7 @@ class TeslaApi {
         });
     }
 
-    onTokenRefreh(callback) {
+    onTokenRefresh(callback) {
         this.cb_refreshToken = callback;
     }
 
