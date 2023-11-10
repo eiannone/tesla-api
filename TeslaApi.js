@@ -12,6 +12,7 @@ class ApiError extends Error {
     static TIMEOUT = 'Timeout';
     static NETWORK = 'Network unavailable';
     static SERVER = 'Internal server error';
+    static FORBIDDEN = 'Forbidden';
 
     constructor(error, reason = null) {
         super((error instanceof Error)? error.message : error);
@@ -35,6 +36,7 @@ class TeslaApi {
     #decodeStatus(statusCode) {
         switch(statusCode) {
             case 401: return ApiError.UNAUTHORIZED;
+            case 403: return ApiError.FORBIDDEN;
             case 404: return ApiError.NO_VEHICLE;
             case 405: return ApiError.IN_SERVICE;
             case 406: return ApiError.NETWORK; // Not Acceptable
