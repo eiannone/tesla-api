@@ -34,7 +34,7 @@ class TeslaApi {
     }
 
     #decodeStatus(statusCode) {
-        switch(statusCode) {
+        switch(statusCode) { // https://developer.tesla.com/docs/fleet-api#response-codes
             case 401: return ApiError.UNAUTHORIZED;
             case 403: return ApiError.FORBIDDEN;
             case 404: return ApiError.NO_VEHICLE;
@@ -112,9 +112,18 @@ class TeslaApi {
         return this.#apiCall((id == null)? this.vid : id);
     }
 
-    async getVehicleData(id = null) {
-        const vid = (id == null)? this.vid : id;
-        return this.#apiCall(vid + "/vehicle_data");
+    /**
+     * https://developer.tesla.com/docs/fleet-api#vehicle_data
+     * Starting from firmware update 2023.38+, if you don't specify any endopint, the following ones are returned:
+     * charge_state, climate_state, drive_state (without location), gui_settings, vehicle_config, vehicle_state
+     * You can ask for the following specific endpoints:
+     * charge_state, climate_state, closures_state, drive_state, gui_settings, location_data, vehicle_config, vehicle_state,
+     * vehicle_data_combo
+     */
+    async getVehicleData(endpoints = [], id = null) {
+        let path = ((id == null)? this.vid : id) + "/vehicle_data";
+        if (endpoints.length > 0) path += "?endpoints="+endpoints.join('%3B');
+        return this.#apiCall(path);
     }
 
     async wakeUp(id = null) {
