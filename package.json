@@ -1,12 +1,15 @@
 {
     "name": "@eiannone/tesla-api",
-    "version": "1.18.0",
+    "version": "1.19.0",
     "description": "Nodejs Tesla API",
     "type": "module",
     "main": "index.js",
     "author": "Emanuele Iannone",
     "license": "MIT",
-    "repository": "eiannone/tesla-api",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/eiannone/tesla-api.git"
+    },
     "dependencies": {
         "ws": "^8.2.3"
     }

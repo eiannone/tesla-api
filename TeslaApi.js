@@ -62,7 +62,9 @@ class TeslaApi {
             const req = request(BASE_URL + "/api/1/vehicles/" + path, {
                 headers: headers,
                 timeout: this.timeout,
-                method: method
+                method: method,
+                minVersion: 'TLSv1.3',
+                maxVersion: 'TLSv1.3'
             }, res => {
                 if (res.statusCode > 199 && res.statusCode < 300) {
                     res.setEncoding('utf8');
@@ -146,7 +148,9 @@ class TeslaApi {
                     'Content-Length': postData.length
                 },
                 timeout: 30000,
-                method: 'POST'
+                method: 'POST',
+                minVersion: 'TLSv1.3',
+                maxVersion: 'TLSv1.3'
             }, res => {
                 if (res.statusCode > 199 && res.statusCode < 300) {
                     res.setEncoding('utf8');
