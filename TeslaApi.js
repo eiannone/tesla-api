@@ -1,4 +1,5 @@
 import {request} from 'https';
+import {connect} from 'http2';
 
 const BASE_URL = "https://owner-api.teslamotors.com";
 
@@ -140,42 +141,52 @@ class TeslaApi {
 
     async #oauthCall(params) {
         return new Promise((resolve, reject) => {
+            
+            const session = connect('https://auth.tesla.com', {
+                minVersion: 'TLSv1.3', maxVersion: 'TLSv1.3'
+            });
+            session.on('error', (err) => {
+                reject(new ApiError(err.message + " ("+err.code+")", ApiError.NETWORK));
+                session.destroy();
+            });
+            
             const postData = JSON.stringify(params);
-            const req = request('https://auth.tesla.com/oauth2/v3/token', {
-                headers: { 
-                    'user-agent': "TeslaEma",
-                    'Content-Type': 'application/json',
-                    'Content-Length': postData.length
-                },
-                timeout: 30000,
-                method: 'POST',
-                minVersion: 'TLSv1.3',
-                maxVersion: 'TLSv1.3'
-            }, res => {
-                if (res.statusCode > 199 && res.statusCode < 300) {
-                    res.setEncoding('utf8');
+            const req = session.request({
+                ':method': 'POST',
+                ':path': '/oauth2/v3/token',
+                'user-agent': 'TeslaEma',
+                'Content-Type': 'application/json',
+                'Content-Length': postData.length
+            }, {
+                timeout: 30000
+            });
+            
+            req.on('response', (headers) => {
+                const statusCode = headers[':status'];
+                if (statusCode > 199 && statusCode < 300) {
                     let rawData = '';
-                    res.on('data', chunk => { rawData += chunk; });
-                    res.on('end', () => {
+                    req.setEncoding('utf8');
+                    req.on('data', chunk => { rawData += chunk; });
+                    req.on('end', () => {
                         try {
                             resolve(JSON.parse(rawData));
                         } catch(err) {
                             reject(new ApiError(err));
                         }
+                        session.close();
                     });
                 } else {
-                    let errMsg = res.statusMessage + " ("+res.statusCode+")";
-                    reject(new ApiError(errMsg, this.#decodeStatus(res.statusCode)));
+                    let errMsg = headers[':status'] + "";
+                    reject(new ApiError(errMsg, this.#decodeStatus(statusCode)));
+                    session.close();
                 }
             });
-            req.on('error', e => {
-                // Error code examples:
-                // - EAI_AGAIN (DNS lookup timeout)
-                // - ECONNRESET
-                // - ECONNREFUSED
-                // - ENOTFOUND
+            
+            req.on('error', (e) => {
                 reject(new ApiError(e.message + " ("+e.code+")", ApiError.NETWORK));
+                session.destroy();
             });
+            
             req.write(postData);
             req.end();
         });
